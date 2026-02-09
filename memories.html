@@ -94,7 +94,7 @@
             </ul>
 
             <div onclick="showSpecialCard()" class="mt-8 bg-purple-600 text-white p-4 rounded-xl text-center shadow-lg transform hover:scale-105 transition cursor-pointer">
-                <p>We wrote something special for you, Soraiya! ❤️</p>
+                <p>We wrote something special for you, <span id="first-name">Soraiya</span>! ❤️</p>
             </div>
             
             <audio id="audio-player" class="hidden"></audio>
@@ -114,6 +114,7 @@
         </div>
     </div>
 
+    <script src="script.js"></script>
     <script>
         // Data Configuration
         const tracks = [
@@ -141,10 +142,14 @@
                         `Enjoy your special day and keep up the good work. Wishing you a bright and successful future.`
                 ];
 
-        // Initialize caption for the default track (index 0)
+        // Initialize caption for the default track (index 0) and name placeholders
         document.addEventListener('DOMContentLoaded', () => {
             const capEl = document.getElementById('memory-caption-p');
             if(capEl) capEl.textContent = captions[0];
+            try {
+                const nameEl = document.getElementById('first-name');
+                if(nameEl && typeof firstName !== 'undefined') nameEl.textContent = firstName;
+            } catch(e) {}
         });
 
         function changeTrack(index) {

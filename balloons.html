@@ -2,144 +2,243 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Blast Balloons</title>
+    <title>Birthday Celebration</title>
+    <script src="script.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Chewy&display=swap" rel="stylesheet">
+    
     <style>
         body {
-            /* Light pink background as seen in balloon section of video */
-            background: #ffe4e6; 
+            /* Pastel Gradient Background */
+            background: linear-gradient(180deg, #fff0f5 0%, #e0f2fe 50%, #f3e8ff 100%);
             overflow: hidden;
             touch-action: manipulation;
+            font-family: 'Arial', sans-serif;
         }
+        
+        /* Happy Birthday Title Styles */
+        #hb-header {
+            font-family: 'Chewy', cursive;
+            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            white-space: nowrap; /* Force single line */
+        }
+        
+        .hb-dimmed {
+            color: rgba(0,0,0,0.05); /* Ghost text */
+            text-shadow: none;
+            transform: scale(0.8);
+            letter-spacing: 2px;
+        }
+
+        .hb-lit {
+            /* Gold fill with Red Outline & Shadow */
+            color: #FFD700; 
+            -webkit-text-stroke: 2px #FF4500;
+            text-shadow: 
+                4px 4px 0px #FF4500, 
+                6px 6px 0px rgba(0,0,0,0.2);
+            transform: scale(1.3);
+            letter-spacing: 5px;
+            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6));
+            animation: gentle-float 3s ease-in-out infinite;
+        }
+
+        @keyframes gentle-float {
+            0%, 100% { transform: scale(1.3) translateY(0); }
+            50% { transform: scale(1.3) translateY(-10px); }
+        }
+
+        /* Balloon Styles */
         .balloon {
             transition: transform 0.2s;
             cursor: crosshair;
             user-select: none;
             -webkit-user-select: none;
             -webkit-touch-callout: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Arial Black', sans-serif;
+            font-size: 30px; 
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            z-index: 20;
         }
         .balloon:active { transform: scale(0.9); }
-        .pop-anim { animation: pop 0.3s forwards; }
-        @keyframes pop { to { transform: scale(1.5); opacity: 0; } }
+        .pop-anim { animation: pop 0.2s forwards; }
         
+        @keyframes pop { to { transform: scale(1.5); opacity: 0; } }
+
         /* Mobile responsive sizing */
         @media (max-width: 768px) {
             .balloon {
                 width: 80px !important;
                 height: 110px !important;
+                font-size: 40px; 
             }
+            /* Adjust header size for mobile so single line fits */
+            .hb-lit { 
+                font-size: 2.5rem !important; 
+                -webkit-text-stroke: 1px #FF4500;
+                text-shadow: 2px 2px 0px #FF4500;
+            } 
         }
-        .pop-particle {
-            position: fixed;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            pointer-events: none;
-            opacity: 1;
-            transform: translate3d(0,0,0) scale(1);
-            transition: transform 600ms cubic-bezier(.2,.8,.2,1), opacity 600ms;
-            z-index: 40;
+
+        /* Name Display Styles */
+        .char-slot {
+            transition: all 0.5s ease;
+            color: rgba(0,0,0,0.1); 
+        }
+        .char-lit {
+            color: #db2777; 
+            text-shadow: 0 0 10px #f472b6, 0 0 20px #f472b6, 0 0 40px #ec4899;
+            transform: scale(1.1);
         }
     </style>
 </head>
 <body class="h-screen flex flex-col items-center justify-center relative">
 
-    <h1 class="text-4xl sm:text-5xl font-bold text-pink-600 mb-8 z-10">Let's blast some balloons! 🎈</h1>
-    <p class="text-base sm:text-lg text-gray-600 z-10 bg-white/50 px-4 py-1 rounded-full">Click them to pop!</p>
+    <h1 id="hb-header" class="hb-dimmed text-5xl sm:text-8xl text-center z-10 mb-8 pointer-events-none">
+        HAPPY BIRTHDAY
+    </h1>
 
-    <a id="next-btn" href="cake.html" class="hidden z-20 mt-8 px-8 py-3 bg-pink-500 hover:bg-pink-600 text-white rounded-full font-bold shadow-lg transition transform hover:scale-110">
+    <div id="name-display" class="name-container flex gap-2 sm:gap-4 flex-wrap justify-center px-4 z-10 mb-8">
+        </div>
+
+    <a id="next-btn" href="cake.html" class="hidden z-50 mt-8 px-8 py-3 bg-pink-500 hover:bg-pink-600 text-white rounded-full font-bold shadow-lg transition transform hover:scale-110 animate-bounce">
         Continue to Cake Ceremony 🎂
     </a>
 
     <script>
-        // --- Pop sound (generated via WebAudio) ---
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        let _popCtx = null;
-        function playPopSound() {
-            try {
-                if (!_popCtx) _popCtx = new AudioCtx();
-                const ctx = _popCtx;
+        // --- CONFIGURATION ---
+        const personName = firstName; // CHANGE NAME HERE
+        const colors = ['#F87171', '#60A5FA', '#34D399', '#A78BFA', '#FBBF24', '#EC4899'];
+        
+        const nameDisplay = document.getElementById('name-display');
+        const hbHeader = document.getElementById('hb-header');
+        const nextBtn = document.getElementById('next-btn');
+        let litCount = 0;
+        const totalChars = personName.replace(/\s/g, '').length;
+        let gameCompleted = false;
 
-                // Short noise burst
-                const bufferSize = ctx.sampleRate * 0.12; // 120ms
-                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) {
-                    // white noise with quick decay
-                    data[i] = (Math.random() * 2 - 1) * Math.exp(-5 * i / bufferSize);
+        // 1. Initialize Name
+        function initName() {
+            for (let i = 0; i < personName.length; i++) {
+                const char = personName[i];
+                const span = document.createElement('span');
+                
+                if (char === ' ') {
+                    span.className = "w-8";
+                } else {
+                    span.innerText = char;
+                    span.className = "char-slot text-6xl sm:text-8xl font-black select-none";
+                    span.dataset.char = char.toUpperCase(); 
+                    span.dataset.lit = "false";
                 }
-
-                const src = ctx.createBufferSource();
-                src.buffer = buffer;
-
-                // Highpass + gain envelope to make it 'pop'
-                const hp = ctx.createBiquadFilter();
-                hp.type = 'highpass';
-                hp.frequency.value = 800;
-
-                const gain = ctx.createGain();
-                gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.7, ctx.currentTime + 0.002);
-                gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12);
-
-                src.connect(hp);
-                hp.connect(gain);
-                gain.connect(ctx.destination);
-
-                src.start();
-                src.stop(ctx.currentTime + 0.13);
-            } catch (e) {
-                // Ignore if WebAudio unsupported
-                console.warn('Pop sound failed:', e);
+                nameDisplay.appendChild(span);
             }
         }
 
-        // --- Pop particle burst ---
-        function createPopEffect(clientX, clientY) {
-            const colors = ['#F87171', '#60A5FA', '#34D399', '#A78BFA', '#FBBF24', '#FFF'];
-            const count = 12;
-            for (let i = 0; i < count; i++) {
-                const p = document.createElement('div');
-                p.className = 'pop-particle';
-                p.style.background = colors[Math.floor(Math.random() * colors.length)];
-                const size = Math.random() * 8 + 6;
-                p.style.width = p.style.height = size + 'px';
-                p.style.left = (clientX - size / 2) + 'px';
-                p.style.top = (clientY - size / 2) + 'px';
-                document.body.appendChild(p);
+        // 2. Confetti Helper
+        function triggerConfetti(x, y) {
+            const xNorm = x / window.innerWidth;
+            const yNorm = y / window.innerHeight;
 
-                // random direction
-                const angle = Math.random() * Math.PI * 2;
-                const distance = 40 + Math.random() * 80;
-                const dx = Math.cos(angle) * distance;
-                const dy = Math.sin(angle) * distance - (Math.random() * 20);
+            confetti({
+                particleCount: 30,
+                spread: 50,
+                origin: { x: xNorm, y: yNorm },
+                colors: colors,
+                disableForReducedMotion: true,
+                zIndex: 100
+            });
+        }
 
-                // trigger transition
-                requestAnimationFrame(() => {
-                    p.style.transform = `translate3d(${dx}px, ${dy}px, 0) scale(${(Math.random() * 0.9) + 0.6})`;
-                    p.style.opacity = '0';
+        // 3. Logic to light up a letter
+        function lightUpChar(character) {
+            const targets = document.querySelectorAll(`.char-slot[data-char="${character}"][data-lit="false"]`);
+            if (targets.length > 0) {
+                const target = targets[0];
+                target.classList.add('char-lit');
+                target.dataset.lit = "true";
+                litCount++;
+
+                if (litCount >= totalChars && !gameCompleted) {
+                    gameCompleted = true;
+                    triggerGrandFinale();
+                }
+                return true; 
+            }
+            return false;
+        }
+
+        // 4. Grand Finale Logic
+        function triggerGrandFinale() {
+            // A. Light up Happy Birthday
+            hbHeader.classList.remove('hb-dimmed');
+            hbHeader.classList.add('hb-lit');
+
+            // B. Show Button
+            setTimeout(() => {
+                nextBtn.classList.remove('hidden');
+            }, 2000);
+
+            // C. Massive Confetti Burst
+            const end = Date.now() + 1000;
+            (function frame() {
+                confetti({
+                    particleCount: 5,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: colors
                 });
+                confetti({
+                    particleCount: 5,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: colors
+                });
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
 
-                // cleanup
-                setTimeout(() => { p.remove(); }, 700 + Math.random() * 300);
-            }
+            // D. 100s of Balloons Rush
+            let burstCount = 0;
+            const rushInterval = setInterval(() => {
+                createBalloon(true); // 'true' flag for finale mode
+                burstCount++;
+                if(burstCount > 150) clearInterval(rushInterval);
+            }, 20); // Very fast spawn rate
         }
-        const colors = ['#F87171', '#60A5FA', '#34D399', '#A78BFA', '#FBBF24'];
-        let popped = 0;
 
-        function createBalloon() {
+        // 5. Create Balloon
+        function createBalloon(isFinale = false) {
+            if (gameCompleted && !isFinale) return;
+
             const b = document.createElement('div');
             const color = colors[Math.floor(Math.random() * colors.length)];
             
-            b.className = 'balloon absolute rounded-full shadow-lg flex items-center justify-center text-white/50 font-bold';
-            b.style.width = '60px';
+            // Random char logic
+            const randomCharIndex = Math.floor(Math.random() * personName.length);
+            const charText = personName[randomCharIndex];
+            if (charText === ' ' && !isFinale) return; 
+
+            b.className = 'balloon absolute rounded-full shadow-lg flex items-center justify-center text-white font-bold';
+            b.style.width = '60px'; 
             b.style.height = '80px';
-            b.style.zIndex = '30';
             b.style.backgroundColor = color;
             b.style.left = Math.random() * 90 + 'vw';
-            b.style.bottom = '-100px';
-            b.style.transition = `bottom ${Math.random() * 5 + 5}s linear`;
             
+            // Speed logic
+            const speed = isFinale ? (Math.random() * 2 + 2) : (Math.random() * 5 + 5);
+            b.style.bottom = '-100px';
+            b.style.transition = `bottom ${speed}s linear`;
+            
+            b.innerText = charText.toUpperCase();
+
             // String
             const string = document.createElement('div');
             string.style.width = '2px';
@@ -148,46 +247,53 @@
             string.style.position = 'absolute';
             string.style.bottom = '-60px';
             string.style.left = '50%';
+            string.style.zIndex = '-1';
             b.appendChild(string);
 
-            // Function to pop balloon
+            // Pop Logic
             const popBalloon = function(e) {
-                if(b.classList.contains('pop-anim')) return; // Prevent multiple pops
+                if(b.classList.contains('pop-anim')) return;
+                
+                let x, y;
+                if (e && e.clientX) { x = e.clientX; y = e.clientY; }
+                else { 
+                    const rect = b.getBoundingClientRect();
+                    x = rect.left + rect.width / 2;
+                    y = rect.top + rect.height / 2;
+                }
+
+                lightUpChar(b.innerText);
+                triggerConfetti(x, y);
+
                 b.classList.add('pop-anim');
-
-                // determine center of balloon for effect
-                const rect = b.getBoundingClientRect();
-                const cx = rect.left + rect.width / 2;
-                const cy = rect.top + rect.height / 2;
-
-                // play sound and show particles
-                playPopSound();
-                createPopEffect(cx, cy);
-
                 setTimeout(() => b.remove(), 300);
-                popped++;
-                if(popped >= 5) document.getElementById('next-btn').classList.remove('hidden');
             };
 
-            // CLICK TO POP Logic
             b.onclick = popBalloon;
-
-            // TOUCH TO POP Logic - for mobile
             b.addEventListener('touchstart', function(e) {
                 e.preventDefault();
-                popBalloon();
+                popBalloon(e.touches[0]);
             }, { passive: false });
 
             document.body.appendChild(b);
 
-            // Float Animation
+            // Float
             setTimeout(() => { b.style.bottom = '110vh'; }, 100);
+
+            // Finale Auto-Pop
+            if (isFinale) {
+                setTimeout(() => {
+                    if(document.body.contains(b)) popBalloon(); 
+                }, Math.random() * 1000 + 1000);
+            }
             
             // Cleanup
             setTimeout(() => { if(b.parentNode) b.remove(); }, 10000);
         }
 
-        setInterval(createBalloon, 600);
+        // Run
+        initName();
+        setInterval(() => createBalloon(false), 600);
     </script>
 </body>
 </html>

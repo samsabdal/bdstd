@@ -1,5 +1,11 @@
 const logo = document.getElementById("logo");
 
+const firstName = "Soraiya";
+const secondName = "Soraiya";
+
+// expose for other pages/scripts
+try { window.firstName = firstName; window.secondName = secondName; } catch(e) {}
+
 window.addEventListener("scroll", () => {
   const scrollY = window.scrollY;
   const maxScroll = 300;
@@ -16,9 +22,11 @@ window.addEventListener("scroll", () => {
 
   const scale = 1 - progress * 0.5;
 
-  logo.style.transform = `
-    translate(-50%, -50%)
-    translate(${currentX - 50}vw, ${currentY - 50}vh)
-    scale(${scale})
-  `;
+  if (logo && logo.style) {
+    logo.style.transform = `
+      translate(-50%, -50%)
+      translate(${currentX - 50}vw, ${currentY - 50}vh)
+      scale(${scale})
+    `;
+  }
 });

@@ -180,6 +180,8 @@
         Open Gifts & Memories 🎁
     </a>
 
+    <script src="script.js"></script>
+
     <script>
         /* --- 1. RIPPLE CURSOR LOGIC --- */
         const cursor = document.getElementById('cursor');
@@ -295,7 +297,8 @@
             document.getElementById('candles').style.opacity = '0';
             
             // Celebration Text
-            instructionText.innerText = "Happy Birthday! Soraiya 🎉";
+            const cakeName = (window.firstName || 'Friend');
+            instructionText.innerText = `Happy Birthday! ${cakeName} 🎉`;
             instructionText.classList.add('text-pink-600');
             
             // Show Next Button

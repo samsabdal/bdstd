@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Blast Balloons</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            /* Light pink background as seen in balloon section of video */
+            background: #ffe4e6; 
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+        .balloon {
+            transition: transform 0.2s;
+            cursor: crosshair;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+        .balloon:active { transform: scale(0.9); }
+        .pop-anim { animation: pop 0.3s forwards; }
+        @keyframes pop { to { transform: scale(1.5); opacity: 0; } }
+        
+        /* Mobile responsive sizing */
+        @media (max-width: 768px) {
+            .balloon {
+                width: 80px !important;
+                height: 110px !important;
+            }
+        }
+        .pop-particle {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 1;
+            transform: translate3d(0,0,0) scale(1);
+            transition: transform 600ms cubic-bezier(.2,.8,.2,1), opacity 600ms;
+            z-index: 40;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col items-center justify-center relative">
+
+    <h2 id="name-display" class="text-4xl sm:text-5xl font-extrabold text-pink-600 mb-6 z-10"></h2>
+    <p class="text-base sm:text-lg text-gray-600 z-10 bg-white/50 px-4 py-1 rounded-full">Click the balloons to light the name one-by-one</p>
+
+    <a id="next-btn" href="cake.html" class="hidden z-20 mt-8 px-8 py-3 bg-pink-500 hover:bg-pink-600 text-white rounded-full font-bold shadow-lg transition transform hover:scale-110">
+        Continue to Cake Ceremony 🎂
+    </a>
+
+    <script src="script.js"></script>
+    <script>
+        const colors = ['#F87171', '#60A5FA', '#34D399', '#A78BFA', '#FBBF24'];
+    // Minimal balloon/name script: reads window.firstName and spawns simple balloons
+    document.addEventListener('DOMContentLoaded', () => {
+        const name = (window.firstName) ? window.firstName : 'FirstName';
+        const nameDisplay = document.getElementById('name-display');
+        nameDisplay.innerHTML = '';
+        const chars = name.split('');
+        chars.forEach((ch, i) => {
+            const s = document.createElement('span');
+            s.className = 'char unlit';
+            s.dataset.index = i;
+            s.textContent = ch === ' ' ? '\u00A0' : ch;
+            nameDisplay.appendChild(s);
+        });
+
+        const visible = chars.map((c,i)=>({c,i})).filter(x=>x.c!==' ').map(x=>x.i);
+        if (visible.length === 0) { nameDisplay.textContent = 'No name'; return; }
+
+        // minimal styles for chars
+        const s = document.createElement('style');
+        s.textContent = `
+            .char.unlit{ color:#6b7280; font-weight:700; margin:0 4px; }
+            .char.lit{ color:#fff; text-shadow:0 0 8px rgba(255,82,153,0.95); }
+            @keyframes rise{ from{bottom:-140px} to{bottom:110vh} }
+            .balloon{ position:absolute; width:64px; height:88px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; cursor:pointer; }
+        `;
+        document.head.appendChild(s);
+
+        let lit = 0;
+
+        function createBalloonAt(index){
+            const ch = chars[index];
+            if (!ch || ch === ' ') return;
+            const b = document.createElement('div');
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            // use original balloon classes for same style
+            //b.className = 'balloon absolute rounded-full shadow-lg flex items-center justify-center text-white/50 font-bold';
+            b.className = 'balloon absolute rounded-full shadow-lg flex items-center justify-center text-white/50 font-bold';
+            b.style.width = '60px';
+            b.style.height = '80px';
+            b.style.zIndex = '30';
+            b.style.backgroundColor = color;
+            b.style.left = Math.random() * 90 + 'vw';
+            // horizontal placement based on visible index with slight randomness
+            //b.style.left = (8 + (visible.indexOf(index)/(visible.length-1 || 1))*84 + (Math.random()*6-3)) + 'vw';
+            b.style.bottom = '-100px';
+            b.style.transition = `bottom ${Math.random() * 5 + 5}s linear`;
+
+            // char inside balloon
+            const charNode = document.createElement('div');
+            charNode.style.pointerEvents = 'none';
+            charNode.style.fontSize = '22px';
+            charNode.style.lineHeight = '1';
+            charNode.textContent = ch;
+            b.appendChild(charNode);
+
+            // string under balloon
+            const string = document.createElement('div');
+            string.style.width = '2px';
+            string.style.height = '70px';
+            string.style.backgroundColor = 'rgba(0,0,0,0.08)';
+            string.style.position = 'absolute';
+            string.style.bottom = '-70px';
+            string.style.left = '50%';
+            b.appendChild(string);
+
+            document.body.appendChild(b);
+
+            b.addEventListener('click', ()=>{
+                // pop visual
+                b.classList.add('pop-anim');
+                // light first unlit matching char
+                const spans = Array.from(document.querySelectorAll('.char'));
+                const target = spans.find(s=>s.textContent===ch && !s.classList.contains('lit'));
+                if (target){ target.classList.remove('unlit'); target.classList.add('lit'); lit++; }
+                setTimeout(()=> { if (b.parentNode) b.remove(); }, 320);
+                if (lit >= visible.length) document.getElementById('next-btn').classList.remove('hidden');
+            });
+
+            // animate via existing rise keyframe and sway
+            const dur = 5 + Math.random()*4;
+            const sway = (Math.random() * 3 + 2).toFixed(2);
+            b.style.animation = `rise ${dur}s linear forwards, sway ${sway}s ease-in-out infinite`;
+            b.style.animationDelay = (Math.random() * 0.6) + 's';
+            const removeDelay = (dur + parseFloat(b.style.animationDelay || 0)) * 1000 + 900;
+            setTimeout(()=> { if (b.parentNode) b.remove(); }, removeDelay);
+        }
+
+        // continuous generator
+        const gen = setInterval(()=>{
+            if (lit >= visible.length) { clearInterval(gen); return; }
+            const idx = visible[Math.floor(Math.random()*visible.length)];
+            createBalloonAt(idx);
+        }, 650);
+    });
+    </script>
+</body>
+</html>
