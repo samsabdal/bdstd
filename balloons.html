@@ -29,6 +29,17 @@
                 height: 110px !important;
             }
         }
+        .pop-particle {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 1;
+            transform: translate3d(0,0,0) scale(1);
+            transition: transform 600ms cubic-bezier(.2,.8,.2,1), opacity 600ms;
+            z-index: 40;
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col items-center justify-center relative">
@@ -41,6 +52,78 @@
     </a>
 
     <script>
+        // --- Pop sound (generated via WebAudio) ---
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let _popCtx = null;
+        function playPopSound() {
+            try {
+                if (!_popCtx) _popCtx = new AudioCtx();
+                const ctx = _popCtx;
+
+                // Short noise burst
+                const bufferSize = ctx.sampleRate * 0.12; // 120ms
+                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    // white noise with quick decay
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-5 * i / bufferSize);
+                }
+
+                const src = ctx.createBufferSource();
+                src.buffer = buffer;
+
+                // Highpass + gain envelope to make it 'pop'
+                const hp = ctx.createBiquadFilter();
+                hp.type = 'highpass';
+                hp.frequency.value = 800;
+
+                const gain = ctx.createGain();
+                gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.7, ctx.currentTime + 0.002);
+                gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12);
+
+                src.connect(hp);
+                hp.connect(gain);
+                gain.connect(ctx.destination);
+
+                src.start();
+                src.stop(ctx.currentTime + 0.13);
+            } catch (e) {
+                // Ignore if WebAudio unsupported
+                console.warn('Pop sound failed:', e);
+            }
+        }
+
+        // --- Pop particle burst ---
+        function createPopEffect(clientX, clientY) {
+            const colors = ['#F87171', '#60A5FA', '#34D399', '#A78BFA', '#FBBF24', '#FFF'];
+            const count = 12;
+            for (let i = 0; i < count; i++) {
+                const p = document.createElement('div');
+                p.className = 'pop-particle';
+                p.style.background = colors[Math.floor(Math.random() * colors.length)];
+                const size = Math.random() * 8 + 6;
+                p.style.width = p.style.height = size + 'px';
+                p.style.left = (clientX - size / 2) + 'px';
+                p.style.top = (clientY - size / 2) + 'px';
+                document.body.appendChild(p);
+
+                // random direction
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 40 + Math.random() * 80;
+                const dx = Math.cos(angle) * distance;
+                const dy = Math.sin(angle) * distance - (Math.random() * 20);
+
+                // trigger transition
+                requestAnimationFrame(() => {
+                    p.style.transform = `translate3d(${dx}px, ${dy}px, 0) scale(${(Math.random() * 0.9) + 0.6})`;
+                    p.style.opacity = '0';
+                });
+
+                // cleanup
+                setTimeout(() => { p.remove(); }, 700 + Math.random() * 300);
+            }
+        }
         const colors = ['#F87171', '#60A5FA', '#34D399', '#A78BFA', '#FBBF24'];
         let popped = 0;
 
@@ -51,6 +134,7 @@
             b.className = 'balloon absolute rounded-full shadow-lg flex items-center justify-center text-white/50 font-bold';
             b.style.width = '60px';
             b.style.height = '80px';
+            b.style.zIndex = '30';
             b.style.backgroundColor = color;
             b.style.left = Math.random() * 90 + 'vw';
             b.style.bottom = '-100px';
@@ -67,9 +151,19 @@
             b.appendChild(string);
 
             // Function to pop balloon
-            const popBalloon = function() {
+            const popBalloon = function(e) {
                 if(b.classList.contains('pop-anim')) return; // Prevent multiple pops
                 b.classList.add('pop-anim');
+
+                // determine center of balloon for effect
+                const rect = b.getBoundingClientRect();
+                const cx = rect.left + rect.width / 2;
+                const cy = rect.top + rect.height / 2;
+
+                // play sound and show particles
+                playPopSound();
+                createPopEffect(cx, cy);
+
                 setTimeout(() => b.remove(), 300);
                 popped++;
                 if(popped >= 5) document.getElementById('next-btn').classList.remove('hidden');
