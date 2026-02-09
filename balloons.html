@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Blast Balloons</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            /* Light pink background as seen in balloon section of video */
+            background: #ffe4e6; 
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+        .balloon {
+            transition: transform 0.2s;
+            cursor: crosshair;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+        .balloon:active { transform: scale(0.9); }
+        .pop-anim { animation: pop 0.3s forwards; }
+        @keyframes pop { to { transform: scale(1.5); opacity: 0; } }
+        
+        /* Mobile responsive sizing */
+        @media (max-width: 768px) {
+            .balloon {
+                width: 80px !important;
+                height: 110px !important;
+            }
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col items-center justify-center relative">
+
+    <h1 class="text-4xl sm:text-5xl font-bold text-pink-600 mb-8 z-10">Let's blast some balloons! 🎈</h1>
+    <p class="text-base sm:text-lg text-gray-600 z-10 bg-white/50 px-4 py-1 rounded-full">Click them to pop!</p>
+
+    <a id="next-btn" href="cake.html" class="hidden z-20 mt-8 px-8 py-3 bg-pink-500 hover:bg-pink-600 text-white rounded-full font-bold shadow-lg transition transform hover:scale-110">
+        Continue to Cake Ceremony 🎂
+    </a>
+
+    <script>
+        const colors = ['#F87171', '#60A5FA', '#34D399', '#A78BFA', '#FBBF24'];
+        let popped = 0;
+
+        function createBalloon() {
+            const b = document.createElement('div');
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            b.className = 'balloon absolute rounded-full shadow-lg flex items-center justify-center text-white/50 font-bold';
+            b.style.width = '60px';
+            b.style.height = '80px';
+            b.style.backgroundColor = color;
+            b.style.left = Math.random() * 90 + 'vw';
+            b.style.bottom = '-100px';
+            b.style.transition = `bottom ${Math.random() * 5 + 5}s linear`;
+            
+            // String
+            const string = document.createElement('div');
+            string.style.width = '2px';
+            string.style.height = '60px';
+            string.style.backgroundColor = 'rgba(0,0,0,0.1)';
+            string.style.position = 'absolute';
+            string.style.bottom = '-60px';
+            string.style.left = '50%';
+            b.appendChild(string);
+
+            // Function to pop balloon
+            const popBalloon = function() {
+                if(b.classList.contains('pop-anim')) return; // Prevent multiple pops
+                b.classList.add('pop-anim');
+                setTimeout(() => b.remove(), 300);
+                popped++;
+                if(popped >= 5) document.getElementById('next-btn').classList.remove('hidden');
+            };
+
+            // CLICK TO POP Logic
+            b.onclick = popBalloon;
+
+            // TOUCH TO POP Logic - for mobile
+            b.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                popBalloon();
+            }, { passive: false });
+
+            document.body.appendChild(b);
+
+            // Float Animation
+            setTimeout(() => { b.style.bottom = '110vh'; }, 100);
+            
+            // Cleanup
+            setTimeout(() => { if(b.parentNode) b.remove(); }, 10000);
+        }
+
+        setInterval(createBalloon, 600);
+    </script>
+</body>
+</html>

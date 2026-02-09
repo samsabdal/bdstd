@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Step 2: Make a Wish & Cut!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* --- GLOBAL & BACKGROUND --- */
+        body { 
+            background: linear-gradient(135deg, #ffcce6, #c4e0ff);
+            cursor: none; 
+            overflow: hidden;
+            font-family: 'Arial Rounded MT Bold', sans-serif;
+        }
+
+        /* --- RIPPLE CURSOR --- */
+        .cursor-ripple {
+            position: fixed;
+            width: 20px; height: 20px;
+            border: 2px solid white;
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s, opacity 0.2s;
+            z-index: 9999;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        .cursor-ripple.expanding {
+            width: 50px; height: 50px;
+            opacity: 0;
+        }
+
+        /* --- KNIFE (Hidden initially) --- */
+        #knife {
+            position: fixed;
+            font-size: 80px;
+            pointer-events: none;
+            z-index: 100;
+            transform: translate(-20px, -60px) rotate(-45deg);
+            transition: transform 0.1s;
+            filter: drop-shadow(5px 5px 5px rgba(0,0,0,0.3));
+            display: none; /* Hidden until candles are blown */
+        }
+
+        /* --- CAKE CONTAINER --- */
+        .cake-wrapper {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cake-img {
+            width: 100%;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+        }
+
+        /* --- REALISTIC CANDLES (From your file) --- */
+        .candle-container {
+            position: absolute;
+            top: 30px; /* Adjust based on your cake image height */
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 25px;
+            z-index: 20;
+        }
+
+        .candle {
+            position: relative;
+            width: 12px;
+            height: 40px;
+            background: linear-gradient(to top, #ffff99, #ff9933);
+            border-radius: 4px;
+            cursor: pointer;
+            touch-action: none;
+        }
+
+        .flame {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 14px;
+            height: 24px;
+            background: radial-gradient(ellipse at center, #ffff00, #ff9900, #ff6600);
+            border-radius: 50% 50% 20% 20%;
+            box-shadow: 0 0 10px #ff9900, 0 0 20px #ffff00;
+            animation: flicker 0.5s infinite alternate;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .candle {
+                width: 20px;
+                height: 60px;
+            }
+            .flame {
+                top: -35px;
+                width: 22px;
+                height: 35px;
+            }
+            .smoke {
+                width: 12px;
+            }
+            .candle-container {
+                gap: 35px;
+            }
+        }
+
+        @keyframes flicker {
+            0% { transform: translateX(-50%) scale(1); opacity: 1; }
+            100% { transform: translateX(-50%) scale(1.1); opacity: 0.9; }
+        }
+
+        /* Smoke Effect */
+        .smoke {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            width: 8px;
+            height: 0;
+            background: rgba(150, 150, 150, 0.5);
+            border-radius: 10px;
+            opacity: 0;
+        }
+
+        .candle.blown .flame { display: none; }
+        .candle.blown .smoke {
+            animation: smokeRise 1.5s forwards;
+        }
+
+        @keyframes smokeRise {
+            0% { 
+                height: 5px; 
+                opacity: 0.8;
+                transform: translateX(-50%) translateY(0);
+            }
+            50% {
+                opacity: 0.6;
+            }
+            100% { 
+                height: 50px; 
+                opacity: 0;
+                transform: translateX(-50%) translateY(-40px) scale(1.5);
+            }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center h-screen">
+
+    <div id="cursor" class="cursor-ripple"></div>
+
+    <div id="knife">🔪</div>
+
+    <h1 id="instruction-text" class="text-4xl text-purple-700 font-bold mb-12 drop-shadow-sm text-center">
+        Step 1: Make a wish & blow the candles! 🎂
+    </h1>
+
+    <div class="cake-wrapper" id="cake-area">
+        
+        <div class="candle-container" id="candles">
+            <div class="candle"><div class="flame"></div><div class="smoke"></div></div>
+            <div class="candle"><div class="flame"></div><div class="smoke"></div></div>
+            <div class="candle"><div class="flame"></div><div class="smoke"></div></div>
+            <div class="candle"><div class="flame"></div><div class="smoke"></div></div>
+            <div class="candle"><div class="flame"></div><div class="smoke"></div></div>
+        </div>
+
+       <img id="cake-whole" src="images/cake1.png" class="cake-img" alt="Whole Cake">
+
+<img id="cake-cut" src="images/cake2.png" class="cake-img hidden" alt="Cut Cake">
+    </div>
+
+    <a id="next-btn" href="memories.html" class="hidden mt-12 bg-purple-600 hover:bg-purple-800 text-white font-bold py-3 px-8 rounded-full shadow-xl transition transform hover:scale-110 z-50 cursor-pointer">
+        Open Gifts & Memories 🎁
+    </a>
+
+    <script>
+        /* --- 1. RIPPLE CURSOR LOGIC --- */
+        const cursor = document.getElementById('cursor');
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            
+            // Move knife if visible
+            const knife = document.getElementById('knife');
+            if(knife.style.display === 'block') {
+                knife.style.left = e.clientX + 'px';
+                knife.style.top = e.clientY + 'px';
+                
+                // Check for cutting logic
+                if(isDragging) checkCut(e.clientX, e.clientY);
+            }
+        });
+
+        document.addEventListener('mousedown', () => cursor.classList.add('expanding'));
+        document.addEventListener('mouseup', () => cursor.classList.remove('expanding'));
+
+
+        /* --- 2. CANDLE BLOWING LOGIC --- */
+        const candles = document.querySelectorAll('.candle');
+        let blownCount = 0;
+
+        candles.forEach(candle => {
+            candle.addEventListener('click', () => blowCandle(candle));
+            candle.addEventListener('mouseover', () => blowCandle(candle)); // Blow on hover too
+        });
+
+        function blowCandle(candle) {
+            if (!candle.classList.contains('blown')) {
+                candle.classList.add('blown');
+                blownCount++;
+                
+                // If all candles blown
+                if (blownCount === candles.length) {
+                    setTimeout(enableKnifeMode, 1000);
+                }
+            }
+        }
+
+        /* --- 3. KNIFE & CUTTING LOGIC --- */
+        const knife = document.getElementById('knife');
+        const instructionText = document.getElementById('instruction-text');
+        const cakeWhole = document.getElementById('cake-whole');
+        const cakeCut = document.getElementById('cake-cut');
+        let isDragging = false;
+        let isCut = false;
+
+        function enableKnifeMode() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            instructionText.innerText = isMobile ? "Step 2: Drag your finger to cut the cake! 🔪" : "Step 2: Drag the knife to cut the cake! 🔪";
+            knife.style.display = 'block';
+            document.body.style.cursor = 'none'; // Ensure default cursor is gone
+        }
+
+        document.addEventListener('mousedown', () => {
+            if (knife.style.display === 'block') {
+                isDragging = true;
+                knife.style.transform = "translate(-20px, -50px) rotate(0deg) scale(1.2)"; // Stab animation
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            knife.style.transform = "translate(-20px, -60px) rotate(-45deg)"; // Reset
+        });
+
+        // Touch events for mobile
+        document.addEventListener('touchstart', () => {
+            if (knife.style.display === 'block') {
+                isDragging = true;
+                knife.style.transform = "translate(-20px, -50px) rotate(0deg) scale(1.2)";
+            }
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (knife.style.display === 'block' && e.touches.length > 0) {
+                const touch = e.touches[0];
+                knife.style.left = touch.clientX + 'px';
+                knife.style.top = touch.clientY + 'px';
+                
+                if(isDragging) checkCut(touch.clientX, touch.clientY);
+            }
+        });
+
+        document.addEventListener('touchend', () => {
+            isDragging = false;
+            knife.style.transform = "translate(-20px, -60px) rotate(-45deg)";
+        });
+
+        function checkCut(x, y) {
+            if (isCut) return;
+
+            const rect = cakeWhole.getBoundingClientRect();
+            
+            // Check if knife crosses the center of the cake
+            if (x > rect.left + 50 && x < rect.right - 50 && 
+                y > rect.top + 50 && y < rect.bottom - 50) {
+                
+                triggerCut();
+            }
+        }
+
+        function triggerCut() {
+            isCut = true;
+            cakeWhole.classList.add('hidden');
+            cakeCut.classList.remove('hidden');
+            
+            // Hide Candles (optional, looks cleaner if they disappear or you can keep them)
+            document.getElementById('candles').style.opacity = '0';
+            
+            // Celebration Text
+            instructionText.innerText = "Happy Birthday! Soraiya 🎉";
+            instructionText.classList.add('text-pink-600');
+            
+            // Show Next Button
+            document.getElementById('next-btn').classList.remove('hidden');
+            
+            // Confetti Effect (Simple JS CSS)
+            createConfetti();
+        }
+
+        function createConfetti() {
+            const emojis = ['🎉', '🎊', '✨', '🎈', '🎁', '⭐', '💫', '🌟'];
+            const colors = ['#ff1744', '#f50057', '#d500f9', '#651fff', '#2979f3', '#00b0ff', '#00e5ff', '#1de9b6', '#00e676', '#76ff03'];
+            
+            // Left Bottom Corner Confetti
+            for(let i=0; i<25; i++) {
+                createConfettiPiece('left', colors, emojis);
+            }
+            
+            // Right Bottom Corner Confetti
+            for(let i=0; i<25; i++) {
+                createConfettiPiece('right', colors, emojis);
+            }
+            
+            // Center area bonus confetti
+            for(let i=0; i<15; i++) {
+                createConfettiPiece('center', colors, emojis);
+            }
+        }
+        
+        function createConfettiPiece(corner, colors, emojis) {
+            const conf = document.createElement('div');
+            conf.style.position = 'fixed';
+            conf.style.fontSize = (Math.random() * 20 + 20) + 'px';
+            conf.style.pointerEvents = 'none';
+            conf.style.userSelect = 'none';
+            conf.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            
+            let startX, endX;
+            
+            if (corner === 'left') {
+                startX = Math.random() * 150;
+                endX = startX - Math.random() * 300;
+                conf.style.left = startX + 'px';
+            } else if (corner === 'right') {
+                startX = window.innerWidth - Math.random() * 150;
+                endX = startX + Math.random() * 300;
+                conf.style.left = startX + 'px';
+            } else {
+                startX = window.innerWidth / 2 + (Math.random() - 0.5) * 400;
+                endX = startX + (Math.random() - 0.5) * 200;
+                conf.style.left = startX + 'px';
+            }
+            
+            conf.style.top = window.innerHeight + 'px';
+            conf.style.zIndex = Math.floor(Math.random() * 1000);
+            conf.style.opacity = '1';
+            conf.style.transform = 'rotate(0deg) scale(1)';
+            conf.style.transition = `all ${Math.random() * 2 + 2.5}s ease-in`;
+            
+            document.body.appendChild(conf);
+            
+            // Trigger animation
+            setTimeout(() => {
+                conf.style.top = (Math.random() * -200 - 100) + 'px';
+                conf.style.left = endX + 'px';
+                conf.style.opacity = '0';
+                conf.style.transform = `rotate(${Math.random() * 720}deg) scale(0)`;
+            }, 50);
+            
+            // Remove after animation
+            setTimeout(() => {
+                conf.remove();
+            }, Math.random() * 2000 + 4000);
+        }
+    </script>
+</body>
+</html>
