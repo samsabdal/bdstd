@@ -1,7 +1,7 @@
 const logo = document.getElementById("logo");
 
-const firstName = "Soraiya";
-const secondName = "Soraiya";
+const firstName = "Stalin Sir";
+const secondName = "Stalin Sir";
 
 // expose for other pages/scripts
 try { window.firstName = firstName; window.secondName = secondName; } catch(e) {}
