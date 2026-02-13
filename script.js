@@ -1,10 +1,10 @@
 const logo = document.getElementById("logo");
 
-const firstName = "Stalin Sir";
-const secondName = "Stalin Sir";
+const firstName = "Nirmit";
+const secondName = "Nirmit";
 
 // expose for other pages/scripts
-try { window.firstName = firstName; window.secondName = secondName; } catch(e) {}
+try { window.firstName = firstName; window.secondName = secondName; } catch (e) { }
 
 window.addEventListener("scroll", () => {
   const scrollY = window.scrollY;

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Welcome to Your Birthday Celebration!</title>
@@ -11,61 +12,109 @@
             font-family: 'Segoe UI', sans-serif;
             overflow: hidden;
         }
+
         .card {
             transition: all 0.5s ease-in-out;
             animation: float 3s ease-in-out infinite;
         }
+
         .spinning-emoji {
             display: inline-block;
             animation: spin 2s linear infinite;
         }
+
         @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
         }
+
         @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
         }
-        .hidden-card { display: none; opacity: 0; }
-        .fade-in { animation: fadeIn 0.8s forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+
+        .hidden-card {
+            display: none;
+            opacity: 0;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
     </style>
 </head>
+
 <body class="h-screen flex items-center justify-center text-white">
 
-    <div id="card-1" class="card bg-white/20 backdrop-blur-lg p-6 sm:p-10 rounded-2xl shadow-2xl text-center w-full sm:max-w-lg mx-4 fade-in border border-white/30">
+    <div id="card-1"
+        class="card bg-white/20 backdrop-blur-lg p-6 sm:p-10 rounded-2xl shadow-2xl text-center w-full sm:max-w-lg mx-4 fade-in border border-white/30">
         <div class="text-4xl mb-4 spinning-emoji">✨</div>
-        <h1 class="text-xl sm:text-2xl font-bold mb-2">Hay <span id="first-name"></span> ✨ It's your day to shine!</h1>
-        <button onclick="nextCard(1)" class="mt-6 px-6 py-2 bg-white text-purple-600 font-bold rounded-full hover:bg-gray-100 transition shadow-lg">Next</button>
+        <h1 class="text-xl sm:text-2xl font-bold mb-2">Hey <span id="first-name"></span> ✨ It's your day to shine!</h1>
+        <button onclick="nextCard(1)"
+            class="mt-6 px-6 py-2 bg-white text-purple-600 font-bold rounded-full hover:bg-gray-100 transition shadow-lg">Next</button>
     </div>
 
-    <div id="card-2" class="hidden-card bg-white/20 backdrop-blur-lg p-6 sm:p-10 rounded-2xl shadow-2xl text-center w-full sm:max-w-lg mx-4 border border-white/30">
+    <div id="card-2"
+        class="hidden-card bg-white/20 backdrop-blur-lg p-6 sm:p-10 rounded-2xl shadow-2xl text-center w-full sm:max-w-lg mx-4 border border-white/30">
         <div class="text-4xl mb-4">🎁</div>
         <h1 class="text-xl sm:text-2xl font-bold">We've set up something super vibrant just for you...</h1>
-        <button onclick="nextCard(2)" class="mt-6 px-6 py-2 bg-white text-purple-600 font-bold rounded-full hover:bg-gray-100 transition shadow-lg">Show me!</button>
+        <button onclick="nextCard(2)"
+            class="mt-6 px-6 py-2 bg-white text-purple-600 font-bold rounded-full hover:bg-gray-100 transition shadow-lg">Show
+            me!</button>
     </div>
 
-    <div id="card-3" class="hidden-card bg-white/20 backdrop-blur-lg p-6 sm:p-10 rounded-2xl shadow-2xl text-center w-full sm:max-w-lg mx-4 border border-white/30">
+    <div id="card-3"
+        class="hidden-card bg-white/20 backdrop-blur-lg p-6 sm:p-10 rounded-2xl shadow-2xl text-center w-full sm:max-w-lg mx-4 border border-white/30">
         <div class="text-4xl mb-4">💡</div>
-        <h1 class="text-xl sm:text-2xl font-bold">Remember, your positivity and confidence brighten every place you step into.</h1>
+        <h1 class="text-xl sm:text-2xl font-bold">Remember, your positivity and confidence brighten every place you step
+            into.</h1>
         <div class="mt-6 space-x-4">
-            <button onclick="nextCard(3)" class="px-6 py-2 bg-white text-purple-600 font-bold rounded-full hover:bg-gray-100 transition shadow-lg">Yes, please!</button>
+            <button onclick="nextCard(3)"
+                class="px-6 py-2 bg-white text-purple-600 font-bold rounded-full hover:bg-gray-100 transition shadow-lg">Yes,
+                please!</button>
         </div>
     </div>
 
-    <div id="card-4" class="hidden-card bg-white/20 backdrop-blur-lg p-6 sm:p-10 rounded-2xl shadow-2xl text-center w-full sm:max-w-lg mx-4 border border-white/30">
+    <div id="card-4"
+        class="hidden-card bg-white/20 backdrop-blur-lg p-6 sm:p-10 rounded-2xl shadow-2xl text-center w-full sm:max-w-lg mx-4 border border-white/30">
         <div class="text-4xl mb-4">🎵</div>
         <h1 class="text-xl sm:text-2xl font-bold">We've curated a special Song just for you. Ready to listen?</h1>
         <div class="mt-6 space-x-4">
-            <button onclick="nextCard(4)" class="px-6 py-2 bg-white text-purple-600 font-bold rounded-full hover:bg-gray-100 transition shadow-lg">Absolutely!</button>
+            <button onclick="nextCard(4)"
+                class="px-6 py-2 bg-white text-purple-600 font-bold rounded-full hover:bg-gray-100 transition shadow-lg">Absolutely!</button>
         </div>
     </div>
 
-    <div id="card-5" class="hidden-card bg-white/20 backdrop-blur-lg p-6 sm:p-10 rounded-2xl shadow-2xl text-center w-full sm:max-w-lg mx-4 border border-white/30">
+    <div id="card-5"
+        class="hidden-card bg-white/20 backdrop-blur-lg p-6 sm:p-10 rounded-2xl shadow-2xl text-center w-full sm:max-w-lg mx-4 border border-white/30">
         <div class="text-4xl mb-4">🚀</div>
         <h1 class="text-xl sm:text-2xl font-bold">Let's get this party started!</h1>
-        <a href="balloons.html" class="inline-block mt-6 px-8 py-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold rounded-full hover:scale-105 transition shadow-lg">
+        <a href="balloons.html"
+            class="inline-block mt-6 px-8 py-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold rounded-full hover:scale-105 transition shadow-lg">
             Let's Go!
         </a>
     </div>
@@ -74,7 +123,7 @@
         function nextCard(current) {
             document.getElementById(`card-${current}`).classList.add('hidden-card');
             const next = document.getElementById(`card-${current + 1}`);
-            if(next) {
+            if (next) {
                 next.classList.remove('hidden-card');
                 next.classList.add('fade-in');
             }
@@ -85,8 +134,9 @@
         // fill name placeholders from script.js firstName
         try {
             const el = document.getElementById('first-name');
-            if(el && typeof firstName !== 'undefined') el.textContent = firstName;
-        } catch(e) {}
+            if (el && typeof firstName !== 'undefined') el.textContent = firstName;
+        } catch (e) { }
     </script>
 </body>
+
 </html>
